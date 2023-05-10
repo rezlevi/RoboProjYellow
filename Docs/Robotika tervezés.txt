@@ -1,0 +1,16 @@
+RGB LED      - 3 Digital Port
+Servo        - 1 analog
+Pier szenzor - 1 digital
+Fény szenzor - 1 analog
+Kijelző      - 2 analog
+Hangszóró    - 1 digital
+Numpad       - 8 digital*
+RFID         - 5 digital
+10 + 8* digital 
+
+4 analog
+
+
+Arduino Mega
+
+* Egyelőre hagyjuk ki.
