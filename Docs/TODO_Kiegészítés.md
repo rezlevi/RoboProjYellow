@@ -1,5 +1,5 @@
 #1
  - Keypad hozzáadása
- - kijelző ránk avan bízva
+ - kijelző ránk van bízva
  - hangszóró dallam mindegy
- - rfid hozzáadása
+ - RFID hozzáadása
