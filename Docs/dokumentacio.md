@@ -62,3 +62,5 @@ Bekapcsolt készenléti állapot esetén a kódgomb lenyomásával - megfelelő 
 Riasztási állapot esetén a kódgomb lenyomásával - megfelelő kód esetén - visszajutunk nem készenléti állapotba, azonban háromszori rossz kódnál történő gombnyomás után lezárt riasztási állapotba kerülünk.Lezárt riasztási állapotból a rendszer nem vihető ki, csak áramtalanítás segítségével.
 
 ### Állapotátmenet szemléltetése gráffal
+
+![h](https://github.com/rezlevi/RoboProjYellow/assets/113850216/bb5b0300-71f9-4020-a772-07e9ca7eb989)
