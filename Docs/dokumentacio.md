@@ -5,52 +5,49 @@
 Egy kóddal működtethető riasztórendszer modellezése, mely készenléti állapotból mozgásra vagy fényre riasztási állapotba kerülhet.
 Bekapcsolt rendszer esetén a készenléti állapot egy kód beírása utáni gomb lenyomással aktiválható/deaktiválható, a riasztási állapot a szenzorokon keresztül aktiválható,
 egy kód beírása utáni gomb lenyomásával pedig deaktiválható. Hogy milyen állapotban van éppen a riasztó berendezés
-(kikapcsolt, bekapcsolt, de nem készenléti, bekapcsolt és készenléti, riasztási, lezárt riasztási), azt egy lámpa működési -esetenként pedig hangszóró - jelzi, mely a projekt során egy RGB LED lesz.
-Egy lezárási funkció - hogy éppen zárt-e az általunk védett terület/objektum - szervomotorral lesz megvalósítva.
+(kikapcsolt, bekapcsolt, de nem készenléti, bekapcsolt és készenléti, riasztási, lezárt riasztási), azt egy lámpa működési -esetenként pedig hangszóró - jelzi.
+Egy lezárási funkció - hogy láthassuk, éppen zárt-e az általunk védett terület/objektum - szervomotorral lesz megvalósítva.
 
 ### Alkatrészlista
 
 - 1 db mikrokontroller (irányításhoz)
 - 1 db kijelző (tudjuk rajta követni a kódot)
-- 2 db nyomógom (egyik a kód beírás utánra, másik a ki- és bekapcsoláshoz)
+- 2 db nyomógomb (egyik a kód beírás utánra, másik a ki- és bekapcsoláshoz)
 - 1 db potméter (ezzel állítjuk be a kódot)
-- 1 db RGB LED (jelzi, hogy milyen állapotban van a rendszerünk)
+- 2 db LED, egy zöld és eg piros (jelzik, hogy milyen állapotban van a rendszerünk)
 - 1 db szervomotor (zárás szimulációjához)
 - 2 db szenzor, egy fény-, illetve mozgásérzékelő (a riasztás kiváltásához)
+- 1 db hangszóró
+
+Megjegyzés: Potméter és nyomógombok helyett lehet keypaddal lesz megvalósítva a kapcsolgatás és kód beírás.
 
 ### Állapotok
 
 1. Kikapcsolt
-	- A bekapcsológomb aktív, jelre vár
-	- A LED nem világít
-	- Kijelző üres
-	- Potméter inaktív
-	- Kódgomb inaktív
+	- Egyik LED sem világít
+	- Kijelző üres, sötét
+	- Hangszóró néma
 	- Szervo nyitott állásban
-	- Szenzorok inaktívak
 2. Bekapcsolt, nem készenéti
-	- A bekapcsológomb aktív, jelre vár
-	- A LED zölden világít
-	- Kijelzőn kezdetben 0, tekerés után a potméter által meghatározott szám
-	- Kódgomb aktív
+	- A zöld LED világít
+	- Kijelző aktív
+	- Hangszóró néma
 	- Szervo nyitott állásban
-	- Szenzorok inaktívak
 3. Bekapcsolt, készenléti
-	- A bekapcsológomb nem aktív
-	- A LED vörösen világít
-	- Kijelzőn kezdetben 0, tekerés után a potméter által meghatározott szám
-	- Kódgomb aktív
+	- A piros LED világít
+	- Kijelző aktív
+	- Hangszóró néma
 	- Szervo zárt állásban
-	- Szenzorok aktívak
 4. Riasztási:
-	- A bekapcsológomb inaktív
-	- A LED vörösen villog
-	- Kijelzőn kezdetben 0, tekerés után a potméter által meghatározott szám
-	- Kódgomb aktív
+	- A piros LED villog
+	- Kijelző aktív
+	- Hangszóró aktív
 	- Szervo zárt állásban
-	- Szenzorok inaktívak
-	- Belső hibaszámláló: Kezdetben 0, hibás kód esetén növekszik 1-gyel
-	- Lezárt riasztási: Ugyanaz, mint a riasztási, csak belső hibaszámláló nélkül
+5. Lezárt riasztási:
+	- A piros LED villog
+	- Kijelzőn "Closed!" felirat
+	- Hangszóró aktív
+	- Szervo zárt állásban
 
 ### A rendszer működése/állapotátmenetek
 
