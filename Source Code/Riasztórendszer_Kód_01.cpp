@@ -41,7 +41,7 @@ void setup()
   pinMode(speaker,OUTPUT);
   myservo.attach(servo);
   myservo.write(180);
-  lcd.init();
+  lcd.begin();
 }
 
 void loop()
