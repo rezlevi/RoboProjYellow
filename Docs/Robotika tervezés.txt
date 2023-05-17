@@ -15,3 +15,7 @@ RFID         - 5 digital
 Arduino Mega
 
 * Egyelőre hagyjuk ki.
+
+
+A3  -   Numpad
+
