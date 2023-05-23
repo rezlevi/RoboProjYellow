@@ -242,7 +242,7 @@ void setup()
   pinMode(pir, INPUT);
   pinMode(speaker, OUTPUT);
   myservo.attach(servo);
-  lcd.init();
+  lcd.begin();
 }
 
 void loop()
