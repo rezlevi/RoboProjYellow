@@ -250,7 +250,7 @@ void loop()
   switch (state)
   {
     case 0:
-		offState();
+	offState();
         break;
     case 1:
       if (offState())
