@@ -33,7 +33,7 @@ char key;
 String code = "";
 int ledState = LOW;
 
-bool offState() //Kikapcsolt állapot
+int offState() //Kikapcsolt állapot
 {
   digitalWrite(ledGreen, LOW);
   lcd.noBacklight();
@@ -45,13 +45,13 @@ bool offState() //Kikapcsolt állapot
     if (key == 'D')
     {
       state = 1;
-      return true;
+      return state;
     }
   }
-  return false;
+  return 0;
 }
 
-bool onState() //Bekapcsolt, nem készenléti állapot
+int onState() //Bekapcsolt, nem készenléti állapot
 {
   initialiseLCD();
   myservo.write(180);
@@ -67,7 +67,7 @@ bool onState() //Bekapcsolt, nem készenléti állapot
     {
       case 'D':
       	state = 0;
-      	return false;
+      	return state;
       	break;
       case 'C':
       	initialiseLCD();
@@ -76,6 +76,7 @@ bool onState() //Bekapcsolt, nem készenléti állapot
       	if (code == "911")
         {
           state = 2;
+          return state;
           break;
         }
         else
@@ -84,21 +85,25 @@ bool onState() //Bekapcsolt, nem készenléti állapot
           wrongCodeCounter++;
           break;
         }
-    }
-    if (code.length() < 3 && key != NO_KEY)
-    {
-      code += key;
-      lcd.print(key);
-    }
-    if (wrongCodeCounter >= 3)
-    {
-      state = 4;
+      default:
+        if (code.length() < 3 && key != NO_KEY)
+        {
+          code += key;
+          lcd.print(key);
+        }
+        if (wrongCodeCounter >= 3)
+        {
+          state = 4;
+          return state;
+          break;
+        }
+        break;
     }
   }
-  return false;
+  return 0;
 }
 
-bool standbyState() //Bekapcsolt, készenléti állapot
+int standbyState() //Bekapcsolt, készenléti állapot
 {
   initialiseLCD();
   lcd.print("Ready to serve");
@@ -112,13 +117,13 @@ bool standbyState() //Bekapcsolt, készenléti állapot
     if (pirValue > 100)
     {
       state = 3;
-      return true;
+      return state;
     }
   }
-  return false;
+  return 1;
 }
 
-bool alarmState() //Riasztási állapot
+int alarmState() //Riasztási állapot
 {
   initialiseLCD();
   lcd.print("INTRUDER HERE");
@@ -131,9 +136,9 @@ bool alarmState() //Riasztási állapot
     {
       previousMillis = currentMillis;
       tone(speaker, 500, 100);
-      delay(200);
+      delay(300);
       tone(speaker, 440, 150);
-      delay(200);
+      delay(300);
       alarmLights();
       digitalWrite(ledRed, ledState);
     }
@@ -142,9 +147,10 @@ bool alarmState() //Riasztási állapot
     checkKey(key);
     if (state == 4)
     {
-      return true;
+      return state;
     }
   }
+  return 1;
 }
 
 void lockDownState() // Lezárt riasztási állapot
@@ -180,10 +186,10 @@ void alarmLights()
 
 void initialiseLCD()
 {
-  digitalWrite(ledGreen, LOW);
-  digitalWrite(ledRed, HIGH);
   lcd.clear();
   code = "";
+  digitalWrite(ledGreen, LOW);
+  digitalWrite(ledRed, HIGH);
 }
 
 void checkKey(char key)
@@ -253,28 +259,19 @@ void loop()
 	offState();
         break;
     case 1:
-      if (offState())
-      {
-        onState();
-        break;
-      }
-      break;
+	onState();
+	break;
     case 2:
-      if (onState())
-      {
-        standbyState();
-        break;
-      }
-      break;
+	standbyState();
+	break;
     case 3:
-      if (standbyState())
-      {
-        alarmState();
-        break;
-      }
-      break;
+	alarmState();
+	break;
     case 4:
-      lockDownState();
-      break;
+	lockDownState();
+	break;
+    default:
+    	lcd.print("Guru meditation!");
+    	break;
   }
 }
