@@ -10,243 +10,268 @@
 #define speaker A1
 
 //Keypadhoz
-char keymap[4][4]= 
+char keymap[4][4] =
 {
-{'1', '2', '3', 'A'}, 
-{'4', '5', '6', 'B'}, 
-{'7', '8', '9', 'C'},
-{'*', '0', '#', 'D'}
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
 };
 
-byte rowPins[4] = {2,3,4,5}; 
-byte colPins[4]= {6,7,8,9};
+byte rowPins[4] = {2, 3, 4, 5};
+byte colPins[4] = {6, 7, 8, 9};
 
-Keypad myKeypad= Keypad(makeKeymap(keymap), rowPins, colPins, 4, 4);
+Keypad myKeypad = Keypad(makeKeymap(keymap), rowPins, colPins, 4, 4);
 
 Servo myservo;
-LiquidCrystal_I2C lcd(32,16,2);
-int pirValue = 0; //Riasztóhoz
+LiquidCrystal_I2C lcd(32, 16, 2);
+int pirValue = 0; // Riasztóhoz
 int previousMillis = 0;
 int interval = 150;
 int state = 0;
 char key;
 String code = "";
+int ledState = LOW;
+
+int offState() //Kikapcsolt állapot
+{
+  digitalWrite(ledGreen, LOW);
+  lcd.noBacklight();
+  lcd.clear();
+
+  while (true)
+  {
+    key = myKeypad.getKey();
+    if (key == 'D')
+    {
+      state = 1;
+      return state;
+    }
+  }
+  return 0;
+}
+
+int onState() //Bekapcsolt, nem készenléti állapot
+{
+  initialiseLCD();
+  myservo.write(180);
+  lcd.backlight();
+  lcd.print("Security code:");
+  lcd.setCursor(0, 1);
+  int wrongCodeCounter = 0;
+  
+  while (true)
+  {
+    key = myKeypad.getKey();
+    switch (key)
+    {
+      case 'D':
+      	state = 0;
+      	return state;
+      	break;
+      case 'C':
+      	initialiseLCD();
+      	break;
+      case 'A':
+      	if (code == "911")
+        {
+          state = 2;
+          return state;
+          break;
+        }
+        else
+        {
+          handleInvalidCode();
+          wrongCodeCounter++;
+          break;
+        }
+      default:
+        if (code.length() < 3 && key != NO_KEY)
+        {
+          code += key;
+          lcd.print(key);
+        }
+        if (wrongCodeCounter >= 3)
+        {
+          state = 4;
+          return state;
+          break;
+        }
+        break;
+    }
+  }
+  return 0;
+}
+
+int standbyState() //Bekapcsolt, készenléti állapot
+{
+  initialiseLCD();
+  lcd.print("Ready to serve");
+  myservo.write(0);
+
+  while (true)
+  {
+    key = myKeypad.getKey();
+    checkKey(key);
+    pirValue = analogRead(pir);
+    if (pirValue > 100)
+    {
+      state = 3;
+      return state;
+    }
+  }
+  return 1;
+}
+
+int alarmState() //Riasztási állapot
+{
+  initialiseLCD();
+  lcd.print("INTRUDER HERE");
+
+  while (true)
+  {
+    //LED + Hangszóró
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval)
+    {
+      previousMillis = currentMillis;
+      tone(speaker, 500, 100);
+      delay(300);
+      tone(speaker, 440, 150);
+      delay(300);
+      alarmLights();
+      digitalWrite(ledRed, ledState);
+    }
+
+    key = myKeypad.getKey();
+    checkKey(key);
+    if (state == 4)
+    {
+      return state;
+    }
+  }
+  return 1;
+}
+
+void lockDownState() // Lezárt riasztási állapot
+{
+  initialiseLCD();
+  lcd.print("CLOSED");
+
+  while (true)
+  {
+    //LED + Hangszóró
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval)
+    {
+      previousMillis = currentMillis;
+      tone(speaker, 440, 150);
+      alarmLights();
+      digitalWrite(ledRed, ledState);
+    }
+  }
+}
+
+void alarmLights()
+{
+  if (ledState == LOW)
+  {
+    ledState = HIGH;
+  }
+  else
+  {
+    ledState = LOW;
+  }
+}
+
+void initialiseLCD()
+{
+  lcd.clear();
+  code = "";
+  digitalWrite(ledGreen, LOW);
+  digitalWrite(ledRed, HIGH);
+}
+
+void checkKey(char key)
+{
+  int wrongCodeCounter = 0;
+  switch (key)
+  {
+    case 'D':
+      state = 1;
+      break;
+    case 'C':
+      initialiseLCD();
+      break;
+    case 'A':
+      if (code == "911")
+      {
+        state = 1;
+      }
+      else
+      {
+        handleInvalidCode();
+        wrongCodeCounter++;
+      }
+      break;
+    default:
+      if (code.length() < 3 && key != NO_KEY && key != 'D')
+      {
+        code += key;
+        lcd.print(key);
+      }
+      break;
+  }
+  if (wrongCodeCounter >= 3)
+  {
+    state = 4;
+  }
+}
+
+void handleInvalidCode()
+{
+  code = "";
+  lcd.clear();
+  lcd.print("Invalid code!");
+  delay(2000);
+  lcd.clear();
+  lcd.print("Try again!");
+  delay(2000);
+  lcd.clear();
+}
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
-  pinMode(pir,INPUT);
-  pinMode(speaker,OUTPUT);
+  pinMode(pir, INPUT);
+  pinMode(speaker, OUTPUT);
   myservo.attach(servo);
-  myservo.write(180);
   lcd.begin();
 }
 
 void loop()
 {
-  
-  //Kikapcsolt állapot
-  if(state == 0)
+  switch (state)
   {
-    digitalWrite(ledGreen, LOW);
-    lcd.noBacklight();
-    lcd.clear();
-    while(true)
-    {
-      key = myKeypad.getKey();
-      if(key == 'D'){state = 1; break;}
-    }
-  }
-  
-  //Bekapcsolt, nem készenléti állapot
-  if(state == 1)
-  {
-    digitalWrite(ledGreen, HIGH);
-    myservo.write(180);
-    lcd.clear();
-    code = "";
-    lcd.backlight();
-    while(true)
-    {
-      key = myKeypad.getKey();
-      if(key == 'D')
-      {state = 0;
-       break;}
-      else if(key == 'C')
-      {
-        code = "";
-        lcd.clear();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 2;
-          break;
-        }
-        else
-        {
-          code = "";
-          lcd.clear();
-          lcd.print("Invalid code!");
-          delay(2000);
-          lcd.clear();
-          lcd.print("Try again!");
-          delay(2000);
-          lcd.clear();
-        }    
-      }
-      else if(code.length() < 3 && key != NO_KEY)
-      {
-        code = code + key;
-        lcd.print(key);
-      }
-    }
-    
-  }
-  
-  //Bekapcsolt, készenléti állapot
-  if(state == 2)
-  {
-    digitalWrite(ledGreen, LOW);
-    digitalWrite(ledRed, HIGH);
-    lcd.clear();
-    code = "";
-    myservo.write(0);
-    while(true)
-    {
-      key = myKeypad.getKey();
-      if(key == 'C')
-      {
-        code = "";
-        lcd.clear();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 1;
-          break;
-        }
-        else
-        {
-          code="";
-          lcd.clear();
-          lcd.print("Invalid code!");
-          delay(2000);
-          lcd.clear();
-          lcd.print("Try again!");
-          delay(2000);
-          lcd.clear();
-        }    
-      }
-      else if(code.length() < 3 && key != NO_KEY && key != 'D')
-      {
-        code = code + key;
-        lcd.print(key);
-      }
-      pirValue = analogRead(pir);
-      if(pirValue > 100)
-      {
-        state = 3;
+    case 0:
+	offState();
         break;
-      }
-    }
-  }
-  
-  
-  //Riasztási állapot
-  if(state == 3)
-  {
-    lcd.clear();
-    code = "";
-    int wrongCodeCounter = 0;
-    int ledState = LOW;
-    bool invalid = false;
-    
-    while(true)
-    {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
-      }
-      
-      key = myKeypad.getKey();
-      if(key == 'C')
-      {
-        code = "";
-        lcd.clear();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 1;
-          break;
-        }
-        else if(wrongCodeCounter < 2)
-        {
-          code="";
-          wrongCodeCounter++;
-          lcd.clear();
-          lcd.print("Invalid code!");
-          invalid = true;
-        }
-        else
-        {
-          state = 4;
-          break;
-        }
-      }
-      else if(code.length() < 3 && key != NO_KEY && key != 'D')
-      {
-        if(invalid == true){lcd.clear(); invalid = false;}
-        code = code + key;
-        lcd.print(key);
-      }
-    }
-  }
-  
-  
-  //Lezárt riasztási állapot
-  if(state == 4)
-  {
-    lcd.clear();
-    lcd.print("Closed!");
-    int ledState = LOW;
-    
-    while(true)
-    {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
-      }
-    }
+    case 1:
+	onState();
+	break;
+    case 2:
+	standbyState();
+	break;
+    case 3:
+	alarmState();
+	break;
+    case 4:
+	lockDownState();
+	break;
+    default:
+    	lcd.print("Guru meditation!");
+    	break;
   }
 }
