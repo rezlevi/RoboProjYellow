@@ -8,6 +8,12 @@
 #define servo 12
 #define pir A0
 #define speaker A1
+//NO CRIIIIME
+//BAD MISTAKES
+//BAD MISTAKES
+//BAD MISTAKES
+//BAD MISTAKES
+//BAD MISTAKES
 
 //Keypadhoz
 char keymap[4][4] =
