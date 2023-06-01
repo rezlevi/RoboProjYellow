@@ -1,302 +1,336 @@
+#include <Arduino.h>
 #include <Servo.h>
 #include <SPI.h>
 #include <Wire.h>
+#include <IRremote.h>
+#include <SPI.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
-#include <IRremote.h>
+
+// Mezők
 
 #define ledGreen 10
 #define ledRed 11
 #define servo 12
 #define pir A0
 #define speaker 3
-
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET 4
-
+#define recvPin 2
 Adafruit_SSD1306 display(OLED_RESET);
-
-Servo myservo;
-int pirValue = 0; //Riasztóhoz
-int previousMillis = 0;
+Servo myServo;
+int pirValue = 0; // Riasztóhoz
+unsigned long previousMillis = 0;
 int interval = 150;
 int state = 0;
-char key;
+String key;
 String code = "";
+IRrecv reciever(recvPin);
+int ledState = LOW;
+decode_results results;
+unsigned long keyCodes = reciever.decodedIRData.decodedRawData;
+
+// Metódusok
+
+// Opcionális, még lehet, hogy jól jön
+/*void decode()
+{
+    if (IrReceiver.decode())
+    {
+        reciever.resume();
+    }
+    delay(100);
+}*/
+
+String initialiseRemote()
+{
+    IrReceiver.decode();
+
+    switch (keyCodes)
+    {
+        case 0xFFA25D:
+            key = "1";
+            break;
+        case 0xFF629D:
+            key = "2";
+            break;
+        case 0xFFE21D:
+            key = "3";
+            break;
+        case 0xFF22DD:
+            key = "4";
+            break;
+        case 0xFF02FD:
+            key = "5";
+            break;
+        case 0xFFC23D:
+            key = "6";
+            break;
+        case 0xFFE01F:
+            key = "7";
+            break;
+        case 0xFFA857:
+            key = "8";
+            break;
+        case 0xFF906F:
+            key = "9";
+            break;
+        case 0xFF6897:
+            key = "*";
+            break;
+        case 0xFF9867:
+            key = "0";
+            break;
+        case 0xFFB04F:
+            key = "#";
+            break;
+        case 0xFF38C7:
+            key = "OK";
+            break;
+        default:
+            display.print("ERROR: Invalid button!");
+            break;
+    }
+
+    return key;
+}
+
+void alarmLights()
+{
+    if (ledState == LOW)
+    {
+        ledState = HIGH;
+    }
+    else
+    {
+        ledState = LOW;
+    }
+}
+
+void initialiseOLED()
+{
+    display.clearDisplay();
+    code = "";
+    digitalWrite(ledGreen, LOW);
+    digitalWrite(ledRed, HIGH);
+}
+
+void handleInvalidCode()
+{
+    code = "";
+    display.clearDisplay();
+    display.print("Invalid code!");
+    delay(2000);
+    display.clearDisplay();
+    display.print("Try again!");
+    delay(2000);
+    display.clearDisplay();
+}
+
+void checkKey(String remoteKey)
+{
+    initialiseRemote();
+    int wrongCodeCounter = 0;
+
+    if (remoteKey == "*") { state = 1; }
+    else if (remoteKey == "#") { initialiseOLED(); }
+    else if (remoteKey == "OK")
+    {
+        if (code == "911") { state = 1; }
+        else
+        {
+            handleInvalidCode();
+            wrongCodeCounter++;
+        }
+    }
+    else if (code.length() < 3 && remoteKey != "" && remoteKey != "#")
+    {
+        code += remoteKey;
+        display.print(remoteKey);
+    }
+    else
+    {
+        display.print("Guru mediation!");
+        alarmLights();
+        delay(30000);
+        initialiseOLED();
+        exit(0);
+    }
+
+    if (wrongCodeCounter >= 3) { state = 4; }
+}
+
 
 #define IR_RECEIVE_PIN 2
 decode_results results;
 
 void setup()
 {
-  Serial.begin(9600);
-  pinMode(ledGreen, OUTPUT);
-  pinMode(ledRed, OUTPUT);
-  pinMode(pir,INPUT);
-  pinMode(speaker,OUTPUT);
-  myservo.attach(servo);
-  myservo.write(180);
-  IrReceiver.begin(IR_RECEIVE_PIN);
-  
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  delay(100);
-  display.clearDisplay();
-  display.display();
-  delay(100);
+    initialiseRemote();
+    digitalWrite(ledGreen, LOW);
+    display.ssd1306_command(SSD1306_DISPLAYOFF);
+    display.clearDisplay();
 
+    while (true)
+    {
+        if (key == "#")
+        {
+            state = 1;
+            return state;
+        }
+        return 0;
+    }
 }
 
 char getKey()
 {
-  char key;
-  if (IrReceiver.decode())
-      {
-      switch(IrReceiver.decodedIRData.command)
+    initialiseOLED();
+    myServo.write(180);
+    display.ssd1306_command(SSD1306_DISPLAYON);
+    display.print("Security code:");
+    display.setCursor(0, 1);
+    int wrongCodeCounter = 0;
+
+    while (true)
+    {
+        if (key == "*")
         {
-          case 69: key = '1';
-           break;
-          case 70: key =  '2';
-           break;
-          case 71: key =  '3';
-           break;
-          case 68: key =  '4';
-           break;
-          case 64: key =  '5';
-           break;
-          case 67: key =  '6';
-           break;
-          case 7: key =  '7';
-           break;
-          case 21: key =  '8';
-           break;
-          case 9: key =  '9';
-           break;
-          case 25: key =  '0';
-           break;
-          case 22: key =  'D';
-           break;
-          case 13: key =  'C';
-           break;
-          case 28: key =  'A';
-           break;
-          default:
-            break;
+            state = 0;
+            return state;
         }
-        IrReceiver.resume();
-        return key;
-      }
-  key = 'F';
-  return key;
+        else if (key == "#") { initialiseOLED(); }
+        else if (key == "OK")
+        {
+            if (code == "911")
+            {
+                state = 2;
+                return state;
+            }
+            else
+            {
+                handleInvalidCode();
+                wrongCodeCounter++;
+            }
+        }
+        else if (code.length() < 3 && key != "")
+        {
+            code += key;
+            display.print(key);
+        }
+        else if (wrongCodeCounter >= 3)
+        {
+            state = 4;
+            return state;
+        }
+        return 0;
+    }
 }
 
+int standbyState() //Bekapcsolt, készenléti állapot
+{
+    initialiseOLED();
+    display.print("Ready to serve");
+    myServo.write(0);
+
+    while (true)
+    {
+        checkKey(key);
+        pirValue = analogRead(pir);
+        if (pirValue < 750)
+        {
+            state = 3;
+            return state;
+        }
+        return 1;
+    }
+}
+
+int alarmState() //Riasztási állapot
+{
+    initialiseOLED();
+    display.print("INTRUDER HERE");
+
+    while (true)
+    {
+        //LED + Hangszóró
+        unsigned long currentMillis = millis();
+        if (currentMillis - previousMillis >= interval)
+        {
+            previousMillis = currentMillis;
+            tone(speaker, 500, 100);
+            delay(300);
+            tone(speaker, 440, 150);
+            delay(300);
+            alarmLights();
+            digitalWrite(ledRed, ledState);
+        }
+        checkKey(key);
+        if (state == 4)
+        {
+            return state;
+        }
+        return 1;
+    }
+}
+
+void lockDownState() // Lezárt riasztási állapot
+{
+    initialiseOLED();
+    display.print("CLOSED");
+
+    while (true)
+    {
+        //LED + Hangszóró
+        unsigned long currentMillis = millis();
+        if (currentMillis - previousMillis >= interval)
+        {
+            previousMillis = currentMillis;
+            tone(speaker, 440, 150);
+            alarmLights();
+            digitalWrite(ledRed, ledState);
+        }
+    }
+}
+
+void setup()
+{
+    Serial.begin(9600);
+    pinMode(ledGreen, OUTPUT);
+    pinMode(ledRed, OUTPUT);
+    pinMode(pir,INPUT);
+    pinMode(speaker,OUTPUT);
+    myServo.attach(servo);
+    myServo.write(180);
+    reciever.enableIRIn();
+    display.ssd1306_command(SSD1306_DISPLAYON);
+    delay(100);
+    display.clearDisplay();
+    display.display();
+    delay(100);
+}
 
 void loop()
 {
-  
-  //Kikapcsolt állapot
-  if(state == 0)
-  {
-    digitalWrite(ledGreen, LOW);
-    display.clearDisplay();
-    display.print("State 0");
-    while(true)
+    switch (state)
     {
-      key = getKey();
-      if(key == 'D'){state = 1; break;}
+        case 0:
+            offState();
+            break;
+        case 1:
+            onState();
+            break;
+        case 2:
+            standbyState();
+            break;
+        case 3:
+            alarmState();
+            break;
+        case 4:
+            lockDownState();
+            break;
+        default:
+            display.print("Guru meditation!");
+            exit(30000);
     }
-  }
-  
-  //Bekapcsolt, nem készenléti állapot
-  if(state == 1)
-  {
-    digitalWrite(ledGreen, HIGH);
-    digitalWrite(ledRed, LOW);
-
-    myservo.write(180);
-    display.clearDisplay();
-    code = "";
-    while(true)
-    {
-      key = getKey();
-      
-      if(key == 'D')
-      {state = 0;
-       break;}
-      else if(key == 'C')
-      {
-        code = "";
-        display.clearDisplay();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 2;
-          break;
-        }
-        else
-        {
-          code = "";
-          display.clearDisplay();
-          display.print("Invalid code!");
-          delay(2000);
-          display.clearDisplay();
-          display.print("Try again!");
-          delay(2000);
-          display.clearDisplay();
-        }    
-      }
-      else if(code.length() < 3 && key != 'F')
-      {
-        code = code + key;
-        display.print(key);
-      }
-    }
-    
-  }
-  
-  //Bekapcsolt, készenléti állapot
-  if(state == 2)
-  {
-    digitalWrite(ledGreen, LOW);
-    digitalWrite(ledRed, HIGH);
-    display.clearDisplay();
-    code = "";
-    myservo.write(0);
-    while(true)
-    {
-      key = getKey();
-      if(key == 'C')
-      {
-        code = "";
-        display.clearDisplay();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 1;
-          break;
-        }
-        else
-        {
-          code="";
-          display.clearDisplay();
-          display.print("Invalid code!");
-          delay(2000);
-          display.clearDisplay();
-          display.print("Try again!");
-          delay(2000);
-          display.clearDisplay();
-        }    
-      }
-      else if(code.length() < 3 && key != 'F' && key != 'D')
-      {
-        code = code + key;
-        display.print(key);
-      }
-      pirValue = analogRead(pir);
-      if(pirValue < 750)
-      {
-        state = 3;
-        break;
-      }
-    }
-  }
-  
-  
-  //Riasztási állapot
-  if(state == 3)
-  {
-    display.clearDisplay();
-    code = "";
-    int wrongCodeCounter = 0;
-    int ledState = LOW;
-    bool invalid = false;
-    
-    while(true)
-    {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
-      }
-      
-      key = getKey();
-      
-      if(key == 'C')
-      {
-        code = "";
-        display.clearDisplay();
-      }
-      else if(key == 'A')
-      {
-        if(code == "911")
-        {
-          state = 1;
-          break;
-        }
-        else if(wrongCodeCounter < 2)
-        {
-          code="";
-          wrongCodeCounter++;
-          display.clearDisplay();
-          display.print("Invalid code!");
-          invalid = true;
-        }
-        else
-        {
-          state = 4;
-          break;
-        }
-      }
-      else if(code.length() < 3 && key != 'F' && key != 'D')
-      {
-        if(invalid == true){display.clearDisplay(); invalid = false;}
-        code = code + key;
-        display.print(key);
-      }
-    }
-  }
-  
-  
-  //Lezárt riasztási állapot
-  if(state == 4)
-  {
-    display.clearDisplay();
-    display.print("Closed!");
-    int ledState = LOW;
-    
-    while(true)
-    {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
-      }
-    }
-  }
 }
