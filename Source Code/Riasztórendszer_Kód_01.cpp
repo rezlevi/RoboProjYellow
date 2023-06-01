@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <Servo.h>
 #include <SPI.h>
 #include <Wire.h>
