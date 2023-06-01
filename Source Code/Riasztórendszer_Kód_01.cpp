@@ -8,7 +8,7 @@
 #define ledGreen 10
 #define ledRed 11
 #define servo 12
-#define pir A1
+#define pir A0
 #define speaker 3
 
 #define SCREEN_WIDTH 128
@@ -25,8 +25,7 @@ int state = 0;
 char key;
 String code = "";
 
-const int RECV_PIN = 2;
-IRrecv irrecv(RECV_PIN);
+#define IR_RECEIVE_PIN 2
 decode_results results;
 
 void setup()
@@ -38,8 +37,7 @@ void setup()
   pinMode(speaker,OUTPUT);
   myservo.attach(servo);
   myservo.write(180);
-  irrecv.enableIRIn();
-  irrecv.blink13(true);
+  IrReceiver.begin(IR_RECEIVE_PIN);
   
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   delay(100);
@@ -52,40 +50,40 @@ void setup()
 char getKey()
 {
   char key;
-  if (irrecv.decode(&results))
+  if (IrReceiver.decode())
       {
-    	switch(results.value)
+      switch(IrReceiver.decodedIRData.command)
         {
-          case 16753245: key = '1';
+          case 69: key = '1';
            break;
-          case 16736925: key =  '2';
+          case 70: key =  '2';
            break;
-          case 16769565: key =  '3';
+          case 71: key =  '3';
            break;
-          case 16720605: key =  '4';
+          case 68: key =  '4';
            break;
-          case 16712445: key =  '5';
+          case 64: key =  '5';
            break;
-          case 16761405: key =  '6';
+          case 67: key =  '6';
            break;
-          case 16769055: key =  '7';
+          case 7: key =  '7';
            break;
-          case 16754775: key =  '8';
+          case 21: key =  '8';
            break;
-          case 16748655: key =  '9';
+          case 9: key =  '9';
            break;
-          case 16750695: key =  '0';
+          case 25: key =  '0';
            break;
-          case 16738455: key =  'D';
+          case 22: key =  'D';
            break;
-          case 16756815: key =  'C';
+          case 13: key =  'C';
            break;
-          case 16726215: key =  'A';
+          case 28: key =  'A';
            break;
           default:
             break;
         }
-        irrecv.resume();
+        IrReceiver.resume();
         return key;
       }
   key = 'F';
@@ -101,6 +99,7 @@ void loop()
   {
     digitalWrite(ledGreen, LOW);
     display.clearDisplay();
+    display.print("State 0");
     while(true)
     {
       key = getKey();
@@ -112,12 +111,15 @@ void loop()
   if(state == 1)
   {
     digitalWrite(ledGreen, HIGH);
+    digitalWrite(ledRed, LOW);
+
     myservo.write(180);
     display.clearDisplay();
     code = "";
     while(true)
     {
       key = getKey();
+      
       if(key == 'D')
       {state = 0;
        break;}
@@ -195,7 +197,7 @@ void loop()
         display.print(key);
       }
       pirValue = analogRead(pir);
-      if(pirValue > 1000)
+      if(pirValue < 750)
       {
         state = 3;
         break;
