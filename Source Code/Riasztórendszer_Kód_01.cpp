@@ -8,7 +8,7 @@
 #define ledGreen 10
 #define ledRed 11
 #define servo 12
-#define pir A1
+#define pir A0
 #define speaker 3
 
 #define SCREEN_WIDTH 128
@@ -197,7 +197,7 @@ void loop()
         display.print(key);
       }
       pirValue = analogRead(pir);
-      if(pirValue > 1000)
+      if(pirValue < 750)
       {
         state = 3;
         break;
