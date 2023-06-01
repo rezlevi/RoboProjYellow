@@ -19,3 +19,16 @@ Arduino Mega
 
 A3  -   Numpad
 
+
+
+
+Hangszóró Negatív,D3
+Oled      SCL: A5, SDA: A4
+RFID      RST: D8, MISO: D5, MOSI: D6, SCK: D7, SDA: D9
+INFRA     DATA: D2
+PHOTO RES: A1
+LED Z     D10
+LED P     D11
+Servo     D12
+
+

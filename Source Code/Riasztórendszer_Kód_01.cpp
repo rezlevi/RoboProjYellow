@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Servo.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <IRremote.h>
 #include <SPI.h>
@@ -160,7 +161,11 @@ void checkKey(String remoteKey)
     if (wrongCodeCounter >= 3) { state = 4; }
 }
 
-int offState() //Kikapcsolt állapot
+
+#define IR_RECEIVE_PIN 2
+decode_results results;
+
+void setup()
 {
     initialiseRemote();
     digitalWrite(ledGreen, LOW);
@@ -176,11 +181,9 @@ int offState() //Kikapcsolt állapot
         }
         return 0;
     }
-
-
 }
 
-int onState() //Bekapcsolt, nem készenléti állapot
+char getKey()
 {
     initialiseOLED();
     myServo.write(180);
