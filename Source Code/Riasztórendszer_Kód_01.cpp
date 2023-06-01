@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <Servo.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -160,11 +161,7 @@ void checkKey(String remoteKey)
     if (wrongCodeCounter >= 3) { state = 4; }
 }
 
-
-#define IR_RECEIVE_PIN 2
-decode_results results;
-
-void setup()
+int offState()
 {
     initialiseRemote();
     digitalWrite(ledGreen, LOW);
@@ -182,7 +179,7 @@ void setup()
     }
 }
 
-char getKey()
+int onState()
 {
     initialiseOLED();
     myServo.write(180);
