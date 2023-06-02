@@ -181,6 +181,7 @@ int offState()
 
 int onState()
 {
+    initialiseRemote();
     initialiseOLED();
     myServo.write(180);
     display.ssd1306_command(SSD1306_DISPLAYON);
