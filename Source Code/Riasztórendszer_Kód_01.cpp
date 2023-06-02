@@ -169,6 +169,7 @@ void loop()
   //Bekapcsolt, készenléti állapot
   if(state == 2)
   {
+    int value = analogRead(pir);
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, HIGH);
     Serial.println("");
@@ -218,8 +219,7 @@ void loop()
       }
       
       pirValue = analogRead(pir);
-      Serial.println(pirValue);
-      if(pirValue < 750)
+      if(abs(value - pirValue) > 100)
       {
         state = 3;
         break;
