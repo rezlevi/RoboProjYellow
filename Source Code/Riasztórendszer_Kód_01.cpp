@@ -1,9 +1,15 @@
+#include <MFRC522.h>
+
 #include <Servo.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
 #include <IRremote.h>
+
+#define SS_PIN 5
+#define RST_PIN 8
+MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
 #define ledGreen 10
 #define ledRed 11
@@ -31,6 +37,9 @@ decode_results results;
 void setup()
 {
   Serial.begin(9600);
+  SPI.begin();     
+  mfrc522.PCD_Init();
+
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
   pinMode(pir,INPUT);
@@ -328,6 +337,15 @@ void loop()
               ledState = LOW;
             }
         digitalWrite(ledRed, ledState);
+      }
+      if (mfrc522.PICC_ReadCardSerial())
+      {
+          Serial.println(mfrc522.uid.uidByte[0]); //Megfelelő érték beállításához
+          if(mfrc522.uid.uidByte[0] == 0)
+          {
+            state = 0;
+            break;
+          }
       }
     }
   }
