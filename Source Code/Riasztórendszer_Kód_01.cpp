@@ -7,7 +7,7 @@
 #include <Adafruit_GFX.h>
 #include <IRremote.h>
 
-#define SS_PIN 5
+#define SS_PIN 9
 #define RST_PIN 8
 MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
