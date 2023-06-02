@@ -8,7 +8,7 @@
 #define ledGreen 10
 #define ledRed 11
 #define servo 12
-#define pir A0
+#define pir A1
 #define speaker 3
 
 #define SCREEN_WIDTH 128
@@ -25,7 +25,8 @@ int state = 0;
 char key;
 String code = "";
 
-#define IR_RECEIVE_PIN 2
+const int RECV_PIN = 2;
+IRrecv irrecv(RECV_PIN);
 decode_results results;
 
 void setup()
@@ -37,57 +38,54 @@ void setup()
   pinMode(speaker,OUTPUT);
   myservo.attach(servo);
   myservo.write(180);
-  IrReceiver.begin(IR_RECEIVE_PIN);
+  irrecv.enableIRIn();
+  irrecv.blink13(true);
   
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   delay(100);
   display.clearDisplay();
-  display.display();
+  display.print();
   delay(100);
 
 }
 
 char getKey()
 {
-  char key;
-  if (IrReceiver.decode())
+  if (irrecv.decode(&results))
       {
-      switch(IrReceiver.decodedIRData.command)
+    	switch(results.value)
         {
-          case 69: key = '1';
+          case 16753245: return '1';
            break;
-          case 70: key =  '2';
+          case 16736925: return '2';
            break;
-          case 71: key =  '3';
+          case 16769565: return '3';
            break;
-          case 68: key =  '4';
+          case 16720605: return '4';
            break;
-          case 64: key =  '5';
+          case 16712445: return '5';
            break;
-          case 67: key =  '6';
+          case 16761405: return '6';
            break;
-          case 7: key =  '7';
+          case 16769055: return '7';
            break;
-          case 21: key =  '8';
+          case 16754775: return '8';
            break;
-          case 9: key =  '9';
+          case 16748655: return '9';
            break;
-          case 25: key =  '0';
+          case 16750695: return '0';
            break;
-          case 22: key =  'D';
+          case 16738455: return 'D';
            break;
-          case 13: key =  'C';
+          case 16756815: return 'C';
            break;
-          case 28: key =  'A';
+          case 16726215: return 'A';
            break;
           default:
             break;
         }
-        IrReceiver.resume();
-        return key;
       }
-  key = 'F';
-  return key;
+  return 'F'; //Csak úgy
 }
 
 
@@ -98,8 +96,9 @@ void loop()
   if(state == 0)
   {
     digitalWrite(ledGreen, LOW);
-    display.clearDisplay();
-    display.print("State 0");
+    Serial.println("");
+    Serial.println("");
+    Serial.println("");
     while(true)
     {
       key = getKey();
@@ -111,22 +110,23 @@ void loop()
   if(state == 1)
   {
     digitalWrite(ledGreen, HIGH);
-    digitalWrite(ledRed, LOW);
-
     myservo.write(180);
-    display.clearDisplay();
+    Serial.println("");
+    Serial.println("");
+    Serial.println("");
     code = "";
     while(true)
     {
       key = getKey();
-      
       if(key == 'D')
       {state = 0;
        break;}
       else if(key == 'C')
       {
         code = "";
-        display.clearDisplay();
+        Serial.println("");
+        Serial.println("");
+        Serial.println("");
       }
       else if(key == 'A')
       {
@@ -138,19 +138,25 @@ void loop()
         else
         {
           code = "";
-          display.clearDisplay();
-          display.print("Invalid code!");
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
+          Serial.print("Invalid code!");
           delay(2000);
-          display.clearDisplay();
-          display.print("Try again!");
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
+          Serial.print("Try again!");
           delay(2000);
-          display.clearDisplay();
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
         }    
       }
       else if(code.length() < 3 && key != 'F')
       {
         code = code + key;
-        display.print(key);
+        Serial.print(key);
       }
     }
     
@@ -161,7 +167,9 @@ void loop()
   {
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, HIGH);
-    display.clearDisplay();
+    Serial.println("");
+    Serial.println("");
+    Serial.println("");
     code = "";
     myservo.write(0);
     while(true)
@@ -170,7 +178,9 @@ void loop()
       if(key == 'C')
       {
         code = "";
-        display.clearDisplay();
+        Serial.println("");
+        Serial.println("");
+        Serial.println("");
       }
       else if(key == 'A')
       {
@@ -182,22 +192,28 @@ void loop()
         else
         {
           code="";
-          display.clearDisplay();
-          display.print("Invalid code!");
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
+          Serial.print("Invalid code!");
           delay(2000);
-          display.clearDisplay();
-          display.print("Try again!");
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
+          Serial.print("Try again!");
           delay(2000);
-          display.clearDisplay();
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
         }    
       }
       else if(code.length() < 3 && key != 'F' && key != 'D')
       {
         code = code + key;
-        display.print(key);
+        Serial.print(key);
       }
       pirValue = analogRead(pir);
-      if(pirValue < 750)
+      if(pirValue > 100)
       {
         state = 3;
         break;
@@ -209,7 +225,9 @@ void loop()
   //Riasztási állapot
   if(state == 3)
   {
-    display.clearDisplay();
+    Serial.println("");
+    Serial.println("");
+    Serial.println("");
     code = "";
     int wrongCodeCounter = 0;
     int ledState = LOW;
@@ -239,7 +257,9 @@ void loop()
       if(key == 'C')
       {
         code = "";
-        display.clearDisplay();
+        Serial.println("");
+        Serial.println("");
+        Serial.println("");
       }
       else if(key == 'A')
       {
@@ -252,8 +272,10 @@ void loop()
         {
           code="";
           wrongCodeCounter++;
-          display.clearDisplay();
-          display.print("Invalid code!");
+          Serial.println("");
+          Serial.println("");
+          Serial.println("");
+          Serial.print("Invalid code!");
           invalid = true;
         }
         else
@@ -264,9 +286,9 @@ void loop()
       }
       else if(code.length() < 3 && key != 'F' && key != 'D')
       {
-        if(invalid == true){display.clearDisplay(); invalid = false;}
+        if(invalid == true){Serial.println(""); Serial.println("");Serial.println(""); invalid = false;}
         code = code + key;
-        display.print(key);
+        Serial.print(key);
       }
     }
   }
@@ -275,8 +297,10 @@ void loop()
   //Lezárt riasztási állapot
   if(state == 4)
   {
-    display.clearDisplay();
-    display.print("Closed!");
+    Serial.println("");
+    Serial.println("");
+    Serial.println("");
+    Serial.print("Closed!");
     int ledState = LOW;
     
     while(true)
