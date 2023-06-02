@@ -48,43 +48,43 @@ String initialiseRemote()
 
     switch (keyCodes)
     {
-        case 0xFFA25D:
+        case 69:
             key = "1";
             break;
-        case 0xFF629D:
+        case 70:
             key = "2";
             break;
-        case 0xFFE21D:
+        case 71:
             key = "3";
             break;
-        case 0xFF22DD:
+        case 68:
             key = "4";
             break;
-        case 0xFF02FD:
+        case 64:
             key = "5";
             break;
-        case 0xFFC23D:
+        case 67:
             key = "6";
             break;
-        case 0xFFE01F:
+        case 7:
             key = "7";
             break;
-        case 0xFFA857:
+        case 21:
             key = "8";
             break;
-        case 0xFF906F:
+        case 9:
             key = "9";
             break;
-        case 0xFF6897:
+        case 22:
             key = "*";
             break;
-        case 0xFF9867:
+        case 25:
             key = "0";
             break;
-        case 0xFFB04F:
+        case 13:
             key = "#";
             break;
-        case 0xFF38C7:
+        case 28:
             key = "OK";
             break;
         default:
