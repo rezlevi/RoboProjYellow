@@ -1,6 +1,4 @@
-#include <Arduino.h>
 #include <Servo.h>
-#include <SPI.h>
 #include <Wire.h>
 #include <IRremote.h>
 #include <SPI.h>
@@ -33,7 +31,7 @@ unsigned long keyCodes = reciever.decodedIRData.decodedRawData;
 
 // Metódusok
 
-// Opcionális, még lehet, hogy jól jön
+// Opcionális, még  lehet, hogy jól jön
 /*void decode()
 {
     if (IrReceiver.decode())
@@ -161,11 +159,7 @@ void checkKey(String remoteKey)
     if (wrongCodeCounter >= 3) { state = 4; }
 }
 
-
-#define IR_RECEIVE_PIN 2
-decode_results results;
-
-void setup()
+int offState() //Kikapcsolt állapot
 {
     initialiseRemote();
     digitalWrite(ledGreen, LOW);
@@ -181,9 +175,11 @@ void setup()
         }
         return 0;
     }
+
+
 }
 
-char getKey()
+int onState() //Bekapcsolt, nem készenléti állapot
 {
     initialiseOLED();
     myServo.write(180);
