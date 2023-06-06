@@ -26,7 +26,7 @@ Servo myservo;
 int pirValue = 0; //Riasztóhoz
 int previousMillis = 0;
 int interval = 500;
-int state = 4;
+int state = 0;
 char key;
 String code = "";
 
@@ -56,6 +56,7 @@ void setup()
   delay(100);
 
 }
+void(* resetFunc)(void)=0;
 
 char getKey()
 {
@@ -111,7 +112,6 @@ void loop()
     digitalWrite(ledRed, LOW);
     delay(100);
     display.clearDisplay();
-    display.print("Hell");
     display.display();
     delay(100);
     while(true)
@@ -129,7 +129,6 @@ void loop()
    digitalWrite(ledRed, LOW);
    delay(100);
    display.clearDisplay();
-   display.print("Hello");
    display.display();
    delay(100); 
     
@@ -258,21 +257,34 @@ void loop()
   if(state == 3)
   {
     code = "";
-    digitalWrite(ledRed, HIGH);
     delay(100);
     display.clearDisplay();
+    display.print("Riasztva!");
     display.display();
     int wrongCodeCounter = 0;
     bool invalid = false;
-    tone(speaker,440, 150);
-    delay(500);
-    tone(speaker,440, 150);
-    delay(500);
-    tone(speaker,440, 150);
-    delay(500);
-  
+    digitalWrite(ledRed, HIGH);
+    delay(200);
+    digitalWrite(ledRed, LOW);
+    delay(200);
+    digitalWrite(ledRed, HIGH);
+    delay(200);
+    digitalWrite(ledRed, LOW);
+    delay(200);
+    digitalWrite(ledRed, HIGH);
+    delay(200);
+    digitalWrite(ledRed, LOW);
+    delay(200);
+    digitalWrite(ledRed, HIGH);
+  unsigned long currentMillis = millis();
     while(true)
-    {   
+    {  
+      
+      if (millis() - currentMillis >= 30000)
+      {
+          state = 4;
+          break;
+      }
       key = getKey();
       if(key == 'C')
       {
@@ -335,22 +347,14 @@ void loop()
     
     while(state == 4)
     {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          
-          
-      }
+      tone(speaker,440,150);
+      delay(500);
       if (rfid.PICC_IsNewCardPresent())
       {
           rfid.PICC_ReadCardSerial(); //Megfelelő érték beállításához
           if(rfid.uid.uidByte[0] == 74)
           {
-            //setup();
-            state = 0;
+            resetFunc();
           }
       }
     }
