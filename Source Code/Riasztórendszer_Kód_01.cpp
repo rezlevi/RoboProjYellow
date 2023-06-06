@@ -1,33 +1,32 @@
-#include <MFRC522.h>
-
 #include <Servo.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
 #include <IRremote.h>
+#include <MFRC522.h>
 
-#define SS_PIN 9
-#define RST_PIN 8
-MFRC522 mfrc522(SS_PIN, RST_PIN); 
-
-#define ledGreen 10
-#define ledRed 11
-#define servo 12
+#define ledGreen 5
+#define ledRed 6
+#define servo 7
 #define pir A0
 #define speaker 3
+
+#define SS_PIN 10
+#define RST_PIN 9
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET 4
 
 Adafruit_SSD1306 display(OLED_RESET);
+MFRC522 rfid(SS_PIN, RST_PIN);
 
 Servo myservo;
 int pirValue = 0; //Riasztóhoz
 int previousMillis = 0;
-int interval = 150;
-int state = 0;
+int interval = 500;
+int state = 4;
 char key;
 String code = "";
 
@@ -37,9 +36,8 @@ decode_results results;
 void setup()
 {
   Serial.begin(9600);
-  SPI.begin();     
-  mfrc522.PCD_Init();
-
+  SPI.begin(); // Init SPI bus
+  rfid.PCD_Init(); // Init MFRC522    
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
   pinMode(pir,INPUT);
@@ -49,7 +47,13 @@ void setup()
   IrReceiver.begin(IR_RECEIVE_PIN);
   
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  
+  delay(100);
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.display();
+  delay(100);
 
 }
 
@@ -104,10 +108,12 @@ void loop()
   if(state == 0)
   {
     digitalWrite(ledGreen, LOW);
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    Serial.print("State 0");
+    digitalWrite(ledRed, LOW);
+    delay(100);
+    display.clearDisplay();
+    display.print("Hell");
+    display.display();
+    delay(100);
     while(true)
     {
       key = getKey();
@@ -118,28 +124,30 @@ void loop()
   //Bekapcsolt, nem készenléti állapot
   if(state == 1)
   {
+   code = "";
+   digitalWrite(ledGreen, HIGH);
+   digitalWrite(ledRed, LOW);
+   delay(100);
+   display.clearDisplay();
+   display.print("Hello");
+   display.display();
+   delay(100); 
     
-    digitalWrite(ledGreen, HIGH);
-    digitalWrite(ledRed, LOW);
 
     myservo.write(180);
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    code = "";
     while(true)
     {
-      key = getKey();
       
+      key = getKey();
       if(key == 'D')
       {state = 0;
        break;}
       else if(key == 'C')
       {
         code = "";
-        Serial.println("");
-        Serial.println("");
-        Serial.println("");
+        display.clearDisplay();
+        display.setCursor(0,0);
+        display.display();
       }
       else if(key == 'A')
       {
@@ -151,26 +159,30 @@ void loop()
         else
         {
           code = "";
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
-          Serial.print("Invalid code!");
+          display.clearDisplay();
+          display.setCursor(0,0); 
+          display.println("Invalid code");
+          display.display();
           delay(2000);
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
-          Serial.print("Try again!");
+          display.clearDisplay();
+          display.setCursor(0,0); 
+          display.println("Try again!");
+          display.display();
           delay(2000);
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
+          display.clearDisplay();
+          display.setCursor(0,0);
+          display.display();
         }    
       }
       else if(code.length() < 3 && key != 'F')
       {
         code = code + key;
-        Serial.print(key);
+        display.clearDisplay();
+        display.setCursor(0,0); 
+        display.println(code);
+        display.display();
       }
+      
     }
     
   }
@@ -178,23 +190,24 @@ void loop()
   //Bekapcsolt, készenléti állapot
   if(state == 2)
   {
-    int value = analogRead(pir);
+    code = "";
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, HIGH);
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    code = "";
+    delay(100);
+    display.clearDisplay();
+    display.display();
+    delay(100); 
+    int value = analogRead(pir);
     myservo.write(0);
     while(true)
     {
-      key = getKey();
+     
       if(key == 'C')
       {
         code = "";
-        Serial.println("");
-        Serial.println("");
-        Serial.println("");
+        display.clearDisplay();
+        display.setCursor(0,0);
+        display.display();
       }
       else if(key == 'A')
       {
@@ -206,33 +219,37 @@ void loop()
         else
         {
           code="";
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
-          Serial.print("Invalid code!");
+          display.clearDisplay();
+          display.setCursor(0,0); 
+          display.println("Invalid code");
+          display.display();
           delay(2000);
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
-          Serial.print("Try again!");
+          display.clearDisplay();
+          display.setCursor(0,0); 
+          display.println("Try again!");
+          display.display();
           delay(2000);
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
+          display.clearDisplay();
+          display.setCursor(0,0);
+          display.display();
         }    
       }
       else if(code.length() < 3 && key != 'F' && key != 'D')
       {
         code = code + key;
-        Serial.print(key);
+        display.clearDisplay();
+        display.setCursor(0,0); 
+        display.println(code);
+        display.display();
       }
       
       pirValue = analogRead(pir);
-      if(abs(value - pirValue) > 100)
+      if(abs(value - pirValue) > 200)
       {
         state = 3;
         break;
       }
+      key = getKey();
     }
   }
   
@@ -240,41 +257,29 @@ void loop()
   //Riasztási állapot
   if(state == 3)
   {
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
     code = "";
+    digitalWrite(ledRed, HIGH);
+    delay(100);
+    display.clearDisplay();
+    display.display();
     int wrongCodeCounter = 0;
-    int ledState = LOW;
     bool invalid = false;
-    
+    tone(speaker,440, 150);
+    delay(500);
+    tone(speaker,440, 150);
+    delay(500);
+    tone(speaker,440, 150);
+    delay(500);
+  
     while(true)
     {   
-      //LED + Hangszóró 
-      unsigned long currentMillis = millis();
-      if (currentMillis - previousMillis >= interval)
-      {
-          previousMillis = currentMillis;
-          tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
-      }
-      
       key = getKey();
-      
       if(key == 'C')
       {
         code = "";
-        Serial.println("");
-        Serial.println("");
-        Serial.println("");
+        display.clearDisplay();
+        display.setCursor(0,0);
+        display.display();
       }
       else if(key == 'A')
       {
@@ -287,10 +292,14 @@ void loop()
         {
           code="";
           wrongCodeCounter++;
-          Serial.println("");
-          Serial.println("");
-          Serial.println("");
-          Serial.print("Invalid code!");
+          display.clearDisplay();
+          display.setCursor(0,0); 
+          display.println("Invalid code");
+          display.display();
+          delay(2000);
+          display.clearDisplay();
+          display.setCursor(0,0);
+          display.display();
           invalid = true;
         }
         else
@@ -299,13 +308,14 @@ void loop()
           break;
         }
       }
-      else if(code.length() < 3 && key != 'F' && key != 'D')
+      else if(code.length() < 3 && key != 'F'  && key != 'D')
       {
-        if(invalid == true){Serial.println("");
-        Serial.println("");
-        Serial.println(""); invalid = false;}
+        if(invalid == true){Serial.println(" "); invalid = false;}
         code = code + key;
-        Serial.print(key);
+        display.clearDisplay();
+        display.setCursor(0,0); 
+        display.println(code);
+        display.display();
       }
     }
   }
@@ -313,14 +323,17 @@ void loop()
   
   //Lezárt riasztási állapot
   if(state == 4)
-  {
-    Serial.println("");
-    Serial.println("");
-    Serial.println("");
-    Serial.print("Closed!");
-    int ledState = LOW;
+{
+  digitalWrite(ledRed, HIGH);
+  delay(100);
+  display.clearDisplay();
+  display.display();
+  delay(100); 
+    display.setCursor(0,0);
+    display.print("Closed!");
+    display.display();
     
-    while(true)
+    while(state == 4)
     {   
       //LED + Hangszóró 
       unsigned long currentMillis = millis();
@@ -328,23 +341,16 @@ void loop()
       {
           previousMillis = currentMillis;
           tone(speaker,440, 150);
-          if (ledState == LOW)
-            {
-             ledState = HIGH;
-            } 
-          else 
-            {
-              ledState = LOW;
-            }
-        digitalWrite(ledRed, ledState);
+          
+          
       }
-      if (mfrc522.PICC_ReadCardSerial())
+      if (rfid.PICC_IsNewCardPresent())
       {
-          Serial.println(mfrc522.uid.uidByte[0]); //Megfelelő érték beállításához
-          if(mfrc522.uid.uidByte[0] == 0)
+          rfid.PICC_ReadCardSerial(); //Megfelelő érték beállításához
+          if(rfid.uid.uidByte[0] == 74)
           {
+            //setup();
             state = 0;
-            break;
           }
       }
     }
