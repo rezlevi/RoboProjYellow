@@ -8,7 +8,7 @@
 
 #define ledGreen 5
 #define ledRed 6
-#define servo 7
+#define servo A3
 #define pir A0
 #define speaker 3
 
@@ -47,13 +47,11 @@ void setup()
   IrReceiver.begin(IR_RECEIVE_PIN);
   
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  delay(100);
   display.clearDisplay();
 
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.display();
-  delay(100);
 
 }
 void(* resetFunc)(void)=0;
@@ -110,10 +108,10 @@ void loop()
   {
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, LOW);
-    delay(100);
+
     display.clearDisplay();
     display.display();
-    delay(100);
+
     while(true)
     {
       key = getKey();
@@ -127,10 +125,10 @@ void loop()
    code = "";
    digitalWrite(ledGreen, HIGH);
    digitalWrite(ledRed, LOW);
-   delay(100);
+
    display.clearDisplay();
    display.display();
-   delay(100); 
+ 
     
 
     myservo.write(180);
@@ -144,9 +142,10 @@ void loop()
       else if(key == 'C')
       {
         code = "";
+    
         display.clearDisplay();
-        display.setCursor(0,0);
         display.display();
+    
       }
       else if(key == 'A')
       {
@@ -158,25 +157,35 @@ void loop()
         else
         {
           code = "";
+      
           display.clearDisplay();
+          display.display();
+      
           display.setCursor(0,0); 
           display.println("Invalid code");
           display.display();
           delay(2000);
+      
           display.clearDisplay();
+          display.display();
+      
           display.setCursor(0,0); 
           display.println("Try again!");
           display.display();
           delay(2000);
+      
           display.clearDisplay();
-          display.setCursor(0,0);
           display.display();
+      
         }    
       }
       else if(code.length() < 3 && key != 'F')
       {
         code = code + key;
+    
         display.clearDisplay();
+        display.display();
+    
         display.setCursor(0,0); 
         display.println(code);
         display.display();
@@ -192,21 +201,22 @@ void loop()
     code = "";
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, HIGH);
-    delay(100);
+
     display.clearDisplay();
     display.display();
-    delay(100); 
+ 
     int value = analogRead(pir);
     myservo.write(0);
     while(true)
     {
-     
+      key = getKey();
       if(key == 'C')
       {
         code = "";
+    
         display.clearDisplay();
-        display.setCursor(0,0);
         display.display();
+    
       }
       else if(key == 'A')
       {
@@ -218,25 +228,35 @@ void loop()
         else
         {
           code="";
+      
           display.clearDisplay();
+          display.display();
+      
           display.setCursor(0,0); 
           display.println("Invalid code");
           display.display();
           delay(2000);
+      
           display.clearDisplay();
+          display.display();
+      
           display.setCursor(0,0); 
           display.println("Try again!");
           display.display();
           delay(2000);
+      
           display.clearDisplay();
-          display.setCursor(0,0);
           display.display();
+      
         }    
       }
       else if(code.length() < 3 && key != 'F' && key != 'D')
       {
         code = code + key;
+    
         display.clearDisplay();
+        display.display();
+    
         display.setCursor(0,0); 
         display.println(code);
         display.display();
@@ -248,7 +268,6 @@ void loop()
         state = 3;
         break;
       }
-      key = getKey();
     }
   }
   
@@ -257,8 +276,11 @@ void loop()
   if(state == 3)
   {
     code = "";
-    delay(100);
+
     display.clearDisplay();
+    display.display();
+
+    display.setCursor(0,0); 
     display.print("Riasztva!");
     display.display();
     int wrongCodeCounter = 0;
@@ -279,19 +301,19 @@ void loop()
   unsigned long currentMillis = millis();
     while(true)
     {  
-      
+      key = getKey();
       if (millis() - currentMillis >= 30000)
       {
           state = 4;
           break;
       }
-      key = getKey();
       if(key == 'C')
       {
         code = "";
+    
         display.clearDisplay();
-        display.setCursor(0,0);
         display.display();
+    
       }
       else if(key == 'A')
       {
@@ -304,13 +326,23 @@ void loop()
         {
           code="";
           wrongCodeCounter++;
+      
           display.clearDisplay();
+          display.display();
+      
           display.setCursor(0,0); 
           display.println("Invalid code");
           display.display();
           delay(2000);
+      
           display.clearDisplay();
-          display.setCursor(0,0);
+          display.display();
+      
+          display.setCursor(0,0); 
+          display.println("Try again!");
+          display.display();
+          delay(2000);
+          display.clearDisplay();
           display.display();
           invalid = true;
         }
@@ -324,7 +356,10 @@ void loop()
       {
         if(invalid == true){Serial.println(" "); invalid = false;}
         code = code + key;
+    
         display.clearDisplay();
+        display.display();
+    
         display.setCursor(0,0); 
         display.println(code);
         display.display();
@@ -337,10 +372,8 @@ void loop()
   if(state == 4)
 {
   digitalWrite(ledRed, HIGH);
-  delay(100);
   display.clearDisplay();
-  display.display();
-  delay(100); 
+  display.display(); 
     display.setCursor(0,0);
     display.print("Closed!");
     display.display();
