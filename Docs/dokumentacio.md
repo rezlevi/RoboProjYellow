@@ -44,7 +44,7 @@ Egy lezárási funkció - hogy láthassuk, éppen zárt-e az általunk védett t
 	- Hangszóró néma
 	- Szervo zárt állásban
 5. Lezárt riasztási:
-	- A piros LED világ
+	- A piros LED világít
 	- Kijelzőn "Closed!" felirat
 	- Hangszóró aktív
 	- Szervo zárt állásban
