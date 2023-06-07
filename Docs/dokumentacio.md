@@ -42,7 +42,7 @@ Egy lezárási funkció - hogy láthassuk, éppen zárt-e az általunk védett t
 	- A piros LED villn hármat, majd világít
 	- Kijelző aktív
 	- Hangszóró néma
-	- Szervo zárt állásban
+	- Szervo nyitott állásban
 5. Lezárt riasztási:
 	- A piros LED világít
 	- Kijelzőn "Closed!" felirat
@@ -58,5 +58,9 @@ Egy lezárási funkció - hogy láthassuk, éppen zárt-e az általunk védett t
 - Lezárt riasztási állapotból a rendszer nem vihető ki, csak RFID használatával. Ekkor ebből kikapcsolt állapotba kerülünk.
 
 ### Állapotátmenet szemléltetése gráffal
+
+Megjegyzés: Az eredeti tervhez képest módosult, hogy nincs mozgásérzékelő, illetve nem csak három rossz kód viszi lezárt
+riasztási állapotba a rendszert, hanem az is, ha a riasztási állapotból nem visszük ki 30 másodpercen belül.
+Ezen változások az állapotátmenet gráfban nincsenek benne.
 
 ![h](https://github.com/rezlevi/RoboProjYellow/assets/113850216/bb5b0300-71f9-4020-a772-07e9ca7eb989)
