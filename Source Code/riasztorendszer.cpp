@@ -1,134 +1,151 @@
 #include <Servo.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <IRremote.h>
-#include <SPI.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
+#include <MFRC522.h>
 
 // Mezők
 
-#define ledGreen 10
-#define ledRed 11
-#define servo 12
+#define ledGreen 6
+#define ledRed 7
+#define servo 8
 #define pir A0
 #define speaker 3
+#define SS_PIN 10
+#define RST_PIN 9
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET 4
 #define recvPin 2
 Adafruit_SSD1306 display(OLED_RESET);
+MFRC522 rfid(SS_PIN, RST_PIN);
 Servo myServo;
-int pirValue = 0; // Riasztóhoz
+int initialPirValue = 0; // Riasztóhoz
 unsigned long previousMillis = 0;
-int interval = 150;
+int interval = 30000;
 int state = 0;
 String key;
 String code = "";
-IRrecv reciever(recvPin);
-int ledState = LOW;
+int redLedState = LOW;
+int greenLedState = LOW;
 decode_results results;
-unsigned long keyCodes = reciever.decodedIRData.decodedRawData;
+unsigned long keyCodes = IrReceiver.decodedIRData.command;
+void(*resetFunc)(void)=0;
 
 // Metódusok
 
-// Opcionális, még  lehet, hogy jól jön
-/*void decode()
+String initialiseRemote() // Gombkiválasztás
 {
-    if (IrReceiver.decode())
-    {
-        reciever.resume();
-    }
-    delay(100);
-}*/
-
-String initialiseRemote()
-{
-    IrReceiver.decode();
-
     switch (keyCodes)
     {
-        case 0xFFA25D:
+        case 69:
             key = "1";
             break;
-        case 0xFF629D:
+        case 70:
             key = "2";
             break;
-        case 0xFFE21D:
+        case 71:
             key = "3";
             break;
-        case 0xFF22DD:
+        case 68:
             key = "4";
             break;
-        case 0xFF02FD:
+        case 64:
             key = "5";
             break;
-        case 0xFFC23D:
+        case 67:
             key = "6";
             break;
-        case 0xFFE01F:
-            key = "7";
+        case 7:
+            key =  "7";
             break;
-        case 0xFFA857:
-            key = "8";
+        case 21:
+            key =  "8";
             break;
-        case 0xFF906F:
-            key = "9";
+        case 9:
+            key =  "9";
             break;
-        case 0xFF6897:
-            key = "*";
+        case 25:
+            key =  "0";
             break;
-        case 0xFF9867:
-            key = "0";
+        case 22:
+            key =  "*";
             break;
-        case 0xFFB04F:
-            key = "#";
+        case 13:
+            key =  "#";
             break;
-        case 0xFF38C7:
-            key = "OK";
+        case 28:
+            key =  "OK";
             break;
         default:
-            display.print("ERROR: Invalid button!");
+            key = "";
             break;
     }
 
+    IrReceiver.resume();
     return key;
 }
 
-void alarmLights()
+void decodeIRSignals() //Infravörös fény dekódolása
 {
-    if (ledState == LOW)
+    if (IrReceiver.decode())
     {
-        ledState = HIGH;
-    }
-    else
-    {
-        ledState = LOW;
+        key = initialiseRemote();
     }
 }
 
-void initialiseOLED()
+void alarmLights() // LED-fények kezelése
 {
-    display.clearDisplay();
+    if (redLedState == LOW && greenLedState == LOW)
+    {
+        redLedState = HIGH;
+    }
+    else if (redLedState == HIGH && greenLedState == LOW)
+    {
+        redLedState = LOW;
+    }
+    else if (redLedState == LOW && greenLedState == HIGH)
+    {
+        greenLedState = LOW;
+    }
+    else
+    {
+        redLedState = LOW;
+        greenLedState = LOW;
+    }
+}
+
+void initialiseOLED() // OLED kiürítése
+{
     code = "";
+    display.clearDisplay();
+    display.display();
     digitalWrite(ledGreen, LOW);
     digitalWrite(ledRed, HIGH);
 }
 
-void handleInvalidCode()
+void handleInvalidCode() // Helytelen gombkombináció logikája
 {
     code = "";
     display.clearDisplay();
+    display.display();
+    display.setCursor(0, 0);
     display.print("Invalid code!");
     delay(2000);
     display.clearDisplay();
+    display.display();
+    display.setCursor(0, 0);
     display.print("Try again!");
     delay(2000);
     display.clearDisplay();
+    display.display();
 }
 
-void checkKey(String remoteKey)
+void checkKey(String remoteKey) // Gombnyomások kiértékelése
 {
-    initialiseRemote();
+    remoteKey = initialiseRemote();
     int wrongCodeCounter = 0;
 
     if (remoteKey == "*") { state = 1; }
@@ -142,8 +159,9 @@ void checkKey(String remoteKey)
             wrongCodeCounter++;
         }
     }
-    else if (code.length() < 3 && remoteKey != "" && remoteKey != "#")
+    else if ((remoteKey != "" || remoteKey != "#") && code.length() <= 3)
     {
+        initialiseOLED();
         code += remoteKey;
         display.print(remoteKey);
     }
@@ -159,15 +177,16 @@ void checkKey(String remoteKey)
     if (wrongCodeCounter >= 3) { state = 4; }
 }
 
-int offState() //Kikapcsolt állapot
+int offState() // Kikapcsolt állapot
 {
-    initialiseRemote();
+    decodeIRSignals();
     digitalWrite(ledGreen, LOW);
+    digitalWrite(ledRed, LOW);
     display.ssd1306_command(SSD1306_DISPLAYOFF);
-    display.clearDisplay();
 
     while (true)
     {
+        decodeIRSignals();
         if (key == "#")
         {
             state = 1;
@@ -175,13 +194,11 @@ int offState() //Kikapcsolt állapot
         }
         return 0;
     }
-
-
 }
 
-int onState() //Bekapcsolt, nem készenléti állapot
+int onState() // Bekapcsolt készenléti állapot
 {
-    initialiseOLED();
+    decodeIRSignals();
     myServo.write(180);
     display.ssd1306_command(SSD1306_DISPLAYON);
     display.print("Security code:");
@@ -195,7 +212,10 @@ int onState() //Bekapcsolt, nem készenléti állapot
             state = 0;
             return state;
         }
-        else if (key == "#") { initialiseOLED(); }
+        else if (key == "#")
+        {
+            initialiseOLED();
+        }
         else if (key == "OK")
         {
             if (code == "911")
@@ -219,8 +239,9 @@ int onState() //Bekapcsolt, nem készenléti állapot
             state = 4;
             return state;
         }
-        return 0;
     }
+
+    return 0;
 }
 
 int standbyState() //Bekapcsolt, készenléti állapot
@@ -228,12 +249,15 @@ int standbyState() //Bekapcsolt, készenléti állapot
     initialiseOLED();
     display.print("Ready to serve");
     myServo.write(0);
+    int newPirValue = analogRead(pir);
 
     while (true)
     {
+
+        key = initialiseRemote();
         checkKey(key);
-        pirValue = analogRead(pir);
-        if (pirValue < 750)
+        initialPirValue = analogRead(pir);
+        if (abs(newPirValue - initialPirValue) > 200)
         {
             state = 3;
             return state;
@@ -246,7 +270,7 @@ int alarmState() //Riasztási állapot
 {
     initialiseOLED();
     display.print("INTRUDER HERE");
-
+    int wrongCodeCounter = 0;
     while (true)
     {
         //LED + Hangszóró
@@ -258,9 +282,11 @@ int alarmState() //Riasztási állapot
             delay(300);
             tone(speaker, 440, 150);
             delay(300);
+            digitalWrite(ledRed, redLedState);
+            digitalWrite(ledGreen, greenLedState);
             alarmLights();
-            digitalWrite(ledRed, ledState);
         }
+        key = initialiseRemote();
         checkKey(key);
         if (state == 4)
         {
@@ -270,7 +296,7 @@ int alarmState() //Riasztási állapot
     }
 }
 
-void lockDownState() // Lezárt riasztási állapot
+[[noreturn]] void lockDownState() // Lezárt riasztási állapot
 {
     initialiseOLED();
     display.print("CLOSED");
@@ -283,31 +309,37 @@ void lockDownState() // Lezárt riasztási állapot
         {
             previousMillis = currentMillis;
             tone(speaker, 440, 150);
-            alarmLights();
-            digitalWrite(ledRed, ledState);
+            digitalWrite(ledRed, redLedState);
+            digitalWrite(ledGreen, greenLedState);
         }
     }
 }
 
+// Főprogram
+
 void setup()
 {
     Serial.begin(9600);
+    SPIClass::begin();
+    rfid.PCD_Init();
     pinMode(ledGreen, OUTPUT);
     pinMode(ledRed, OUTPUT);
     pinMode(pir,INPUT);
     pinMode(speaker,OUTPUT);
     myServo.attach(servo);
     myServo.write(180);
-    reciever.enableIRIn();
-    display.ssd1306_command(SSD1306_DISPLAYON);
+    IrReceiver.begin(recvPin);
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
     delay(100);
     display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
     display.display();
-    delay(100);
 }
 
 void loop()
 {
+    decodeIRSignals();
     switch (state)
     {
         case 0:
@@ -324,7 +356,6 @@ void loop()
             break;
         case 4:
             lockDownState();
-            break;
         default:
             display.print("Guru meditation!");
             exit(30000);
